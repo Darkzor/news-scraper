@@ -2,6 +2,12 @@
 
 Browser-based news scraping and administration system.
 
+## Stack
+
+- Backend: FastAPI, SQLAlchemy, SQLite by default.
+- Scraper: Playwright Python with deterministic HTML extraction helpers for tests.
+- Frontend: React and Vite.
+
 ## Backend
 
 The Python backend is bootstrapped as a FastAPI application package under
@@ -26,6 +32,10 @@ Configuration can be provided with environment variables:
 - `NEWS_SCRAPER_APP_NAME`
 - `NEWS_SCRAPER_APP_VERSION`
 - `NEWS_SCRAPER_API_PREFIX`
+- `NEWS_SCRAPER_DATABASE_URL`
+- `NEWS_SCRAPER_TIMEOUT_MS`
+- `NEWS_SCRAPER_MAX_ARTICLES`
+- `NEWS_SCRAPER_RETRIES`
 
 ## Frontend
 
@@ -62,3 +72,16 @@ Run one suite by passing a target:
 .venv/bin/python scripts/run_tests.py backend
 .venv/bin/python scripts/run_tests.py frontend
 ```
+
+The same workflow is available through `make`:
+
+```bash
+make install
+make test
+```
+
+## API And Operations
+
+- API shapes are documented in [docs/API.md](docs/API.md).
+- Scraping policy and rate-limit guidance are documented in [docs/SCRAPING_POLICY.md](docs/SCRAPING_POLICY.md).
+- Staging deployment notes are documented in [docs/STAGING_DEPLOYMENT.md](docs/STAGING_DEPLOYMENT.md).
