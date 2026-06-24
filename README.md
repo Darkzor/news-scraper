@@ -26,3 +26,24 @@ Configuration can be provided with environment variables:
 - `NEWS_SCRAPER_APP_NAME`
 - `NEWS_SCRAPER_APP_VERSION`
 - `NEWS_SCRAPER_API_PREFIX`
+
+## Frontend
+
+The React admin frontend is bootstrapped as a Vite application under
+`frontend`.
+
+Local development commands:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Run frontend checks:
+
+```bash
+cd frontend
+npm test
+npm run build
+```
