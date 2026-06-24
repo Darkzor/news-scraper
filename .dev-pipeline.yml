@@ -1,0 +1,17 @@
+default_branch: staging
+task_source: TODO.md
+worker_policy: qwen_first
+codex_fallback: true
+codex_install_policy: project
+auto_merge: true
+require_ci_before_merge: false
+
+ollama:
+  base_url: http://172.16.15.201:11434
+  model: qwen3.6:35b-a3b
+  timeout_seconds: 900
+  verify_tls: true
+  auth_header_env: OLLAMA_AUTH_HEADER
+
+local_ci:
+  enabled: false
