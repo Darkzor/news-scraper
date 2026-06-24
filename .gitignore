@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+news_scraper.db
+node_modules/
+dist/
+coverage/
+.DS_Store
