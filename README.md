@@ -47,3 +47,18 @@ cd frontend
 npm test
 npm run build
 ```
+
+## Test Runner
+
+Run both automated test suites from the repository root:
+
+```bash
+.venv/bin/python scripts/run_tests.py
+```
+
+Run one suite by passing a target:
+
+```bash
+.venv/bin/python scripts/run_tests.py backend
+.venv/bin/python scripts/run_tests.py frontend
+```
