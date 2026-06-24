@@ -30,6 +30,10 @@ def test_get_settings_reads_environment(monkeypatch) -> None:
     monkeypatch.setenv("NEWS_SCRAPER_APP_NAME", "Env News API")
     monkeypatch.setenv("NEWS_SCRAPER_APP_VERSION", "1.2.3")
     monkeypatch.setenv("NEWS_SCRAPER_API_PREFIX", "/env-api")
+    monkeypatch.setenv("NEWS_SCRAPER_DATABASE_URL", "sqlite:///env.db")
+    monkeypatch.setenv("NEWS_SCRAPER_TIMEOUT_MS", "1234")
+    monkeypatch.setenv("NEWS_SCRAPER_MAX_ARTICLES", "7")
+    monkeypatch.setenv("NEWS_SCRAPER_RETRIES", "2")
 
     settings = get_settings()
 
@@ -37,5 +41,9 @@ def test_get_settings_reads_environment(monkeypatch) -> None:
         app_name="Env News API",
         app_version="1.2.3",
         api_prefix="/env-api",
+        database_url="sqlite:///env.db",
+        scraper_timeout_ms=1234,
+        scraper_max_articles=7,
+        scraper_retries=2,
     )
     get_settings.cache_clear()

@@ -35,6 +35,14 @@ button {
   cursor: pointer;
 }
 
+input {
+  min-height: 2.5rem;
+  border: 1px solid #cdd8e3;
+  border-radius: 6px;
+  padding: 0 0.75rem;
+  font: inherit;
+}
+
 button:hover {
   background: #163d70;
 }
@@ -78,14 +86,17 @@ button:hover {
   gap: 0.5rem;
 }
 
-.sidebar a {
+.sidebar nav button {
   border-radius: 6px;
+  background: transparent;
+  text-align: left;
   padding: 0.85rem 1rem;
   color: #dce8ef;
   font-weight: 700;
 }
 
-.sidebar a:hover {
+.sidebar nav button:hover,
+.sidebar nav button.active {
   background: #223342;
   color: #ffffff;
 }
@@ -141,6 +152,122 @@ button:hover {
   line-height: 1;
 }
 
+.notice {
+  border: 1px solid #d9e2ea;
+  border-radius: 8px;
+  background: #ffffff;
+  margin: 0;
+  padding: 0.9rem 1rem;
+}
+
+.notice.error {
+  border-color: #fecaca;
+  background: #fff1f2;
+  color: #9f1239;
+}
+
+.notice.success {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.9fr) minmax(0, 1.4fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.panel {
+  border: 1px solid #d9e2ea;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 1.25rem;
+}
+
+.panel h3 {
+  margin: 0 0 1rem;
+}
+
+form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  color: #344554;
+  font-weight: 700;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.toggle input {
+  min-height: auto;
+}
+
+.row,
+.article-button {
+  display: grid;
+  width: 100%;
+  gap: 0.35rem;
+  border: 1px solid #e4ebf2;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #172026;
+  margin-bottom: 0.75rem;
+  padding: 0.9rem;
+  text-align: left;
+}
+
+.row span,
+.article-button span,
+.row small {
+  color: #5d6d7c;
+}
+
+.row.compact {
+  grid-template-columns: 5rem 1fr 1fr 2fr;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.actions button,
+.article-button {
+  min-height: 2.25rem;
+}
+
+.actions button:nth-child(2) {
+  background: #37606f;
+}
+
+.actions button:nth-child(3) {
+  background: #9f1239;
+}
+
+.empty {
+  color: #5d6d7c;
+}
+
+.article-detail pre {
+  white-space: pre-wrap;
+  border: 1px solid #e4ebf2;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 1rem;
+  line-height: 1.55;
+}
+
 @media (max-width: 760px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -151,10 +278,10 @@ button:hover {
   }
 
   .sidebar nav {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .sidebar a {
+  .sidebar nav button {
     padding: 0.75rem 0.5rem;
     text-align: center;
   }
@@ -169,6 +296,14 @@ button:hover {
   }
 
   .status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .split {
+    grid-template-columns: 1fr;
+  }
+
+  .row.compact {
     grid-template-columns: 1fr;
   }
 }
