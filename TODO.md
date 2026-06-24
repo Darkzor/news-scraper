@@ -5,7 +5,7 @@ This checklist is the implementation backlog for the news scraper. Agents should
 ## Foundation
 
 - [x] Bootstrap Python FastAPI backend project structure
-- [ ] Bootstrap React frontend project structure
+- [x] Bootstrap React frontend project structure
 - [ ] Add shared local development commands and documentation
 - [ ] Add automated test runners for backend and frontend
 - [ ] Add persistent storage model for websites articles and scrape jobs
