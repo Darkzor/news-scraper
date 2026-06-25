@@ -31,6 +31,30 @@ Returns `201` with the stored website. Duplicate `base_url` values return `409`.
 - `PATCH /api/websites/{website_id}` updates any subset of website fields.
 - `DELETE /api/websites/{website_id}` deletes the website and dependent records.
 
+## Selector Suggestions
+
+`POST /api/selector-suggestions`
+
+```json
+{
+  "base_url": "https://example.test"
+}
+```
+
+Returns validated selectors that can be reviewed and saved on a website:
+
+```json
+{
+  "discovery_selector": "main a.article-link",
+  "title_selector": "h1",
+  "description_selector": "meta[name='description']",
+  "content_selector": "article"
+}
+```
+
+Ollama or model failures return `502`. Generated selectors that do not extract
+usable rendered content return `422`.
+
 ## Articles
 
 - `GET /api/articles` lists extracted articles, newest first. Optional query: `website_id`.

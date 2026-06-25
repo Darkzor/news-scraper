@@ -5,6 +5,12 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from news_scraper_backend.api import schemas
+from news_scraper_backend.scraper.selector_inference import (
+    OllamaSelectorClient,
+    OllamaSelectorError,
+    SelectorInferenceService,
+    SelectorValidationError,
+)
 from news_scraper_backend.scraper.service import PlaywrightScraper, run_scrape_job
 from news_scraper_backend.storage import repository
 from news_scraper_backend.storage.database import get_session
@@ -75,6 +81,35 @@ def delete_website(website_id: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Website not found")
     repository.delete_website(session, website)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@api_router.post(
+    "/selector-suggestions",
+    response_model=schemas.SelectorSuggestionRead,
+    responses={
+        422: {"model": schemas.ErrorResponse},
+        502: {"model": schemas.ErrorResponse},
+    },
+)
+async def suggest_selectors(payload: schemas.SelectorSuggestionRequest, request: Request):
+    settings = request.app.state.settings
+    ollama = OllamaSelectorClient(
+        base_url=settings.ollama_base_url,
+        model=settings.ollama_model,
+        timeout_ms=settings.ollama_timeout_ms,
+        auth_header=settings.ollama_auth_header,
+    )
+    service = SelectorInferenceService(
+        ollama=ollama,
+        timeout_ms=settings.scraper_timeout_ms,
+        max_html_chars=settings.selector_inference_max_html_chars,
+    )
+    try:
+        return await service.suggest_selectors(str(payload.base_url))
+    except SelectorValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except OllamaSelectorError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
 
 @api_router.get("/articles", response_model=list[schemas.ArticleRead])

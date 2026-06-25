@@ -2,6 +2,11 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
+from news_scraper_backend.scraper.selector_inference import (
+    OllamaSelectorError,
+    SelectorSuggestion,
+    SelectorValidationError,
+)
 from news_scraper_backend.storage import repository
 
 
@@ -94,3 +99,71 @@ def test_scrape_job_create_list_and_status(client: TestClient, monkeypatch) -> N
     assert job["status"] == "succeeded"
     assert job["saved_articles"] == 1
     assert client.get("/api/scrape-jobs").json()[0]["id"] == created.json()["id"]
+
+
+def test_selector_suggestion_api_returns_validated_selectors(client: TestClient, monkeypatch) -> None:
+    class FakeSelectorInferenceService:
+        def __init__(self, **kwargs) -> None:
+            pass
+
+        async def suggest_selectors(self, base_url: str) -> SelectorSuggestion:
+            assert base_url == "https://example.test/"
+            return SelectorSuggestion(
+                discovery_selector="main a.article-link",
+                title_selector="h1",
+                description_selector="meta[name='description']",
+                content_selector="article",
+            )
+
+    monkeypatch.setattr(
+        "news_scraper_backend.api.router.SelectorInferenceService",
+        FakeSelectorInferenceService,
+    )
+
+    response = client.post("/api/selector-suggestions", json={"base_url": "https://example.test"})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "discovery_selector": "main a.article-link",
+        "title_selector": "h1",
+        "description_selector": "meta[name='description']",
+        "content_selector": "article",
+    }
+
+
+def test_selector_suggestion_api_maps_validation_errors(client: TestClient, monkeypatch) -> None:
+    class FakeSelectorInferenceService:
+        def __init__(self, **kwargs) -> None:
+            pass
+
+        async def suggest_selectors(self, base_url: str) -> SelectorSuggestion:
+            raise SelectorValidationError("content selector did not extract text")
+
+    monkeypatch.setattr(
+        "news_scraper_backend.api.router.SelectorInferenceService",
+        FakeSelectorInferenceService,
+    )
+
+    response = client.post("/api/selector-suggestions", json={"base_url": "https://example.test"})
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "content selector did not extract text"
+
+
+def test_selector_suggestion_api_maps_ollama_errors(client: TestClient, monkeypatch) -> None:
+    class FakeSelectorInferenceService:
+        def __init__(self, **kwargs) -> None:
+            pass
+
+        async def suggest_selectors(self, base_url: str) -> SelectorSuggestion:
+            raise OllamaSelectorError("ollama HTTP 404 for model qwen-test")
+
+    monkeypatch.setattr(
+        "news_scraper_backend.api.router.SelectorInferenceService",
+        FakeSelectorInferenceService,
+    )
+
+    response = client.post("/api/selector-suggestions", json={"base_url": "https://example.test"})
+
+    assert response.status_code == 502
+    assert response.json()["detail"] == "ollama HTTP 404 for model qwen-test"

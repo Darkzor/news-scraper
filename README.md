@@ -42,6 +42,16 @@ from `.env`.
 - `NEWS_SCRAPER_TIMEOUT_MS`
 - `NEWS_SCRAPER_MAX_ARTICLES`
 - `NEWS_SCRAPER_RETRIES`
+- `NEWS_SCRAPER_OLLAMA_BASE_URL`
+- `NEWS_SCRAPER_OLLAMA_MODEL`
+- `NEWS_SCRAPER_OLLAMA_TIMEOUT_MS`
+- `NEWS_SCRAPER_OLLAMA_AUTH_HEADER`
+- `NEWS_SCRAPER_SELECTOR_INFERENCE_MAX_HTML_CHARS`
+
+Selector inference uses the configured Ollama endpoint to ask Qwen for CSS
+selectors, then validates those selectors against rendered pages before the
+admin UI fills the form. The default local example points at
+`http://172.16.15.201:11434` with model `qwen3.6:35b-a3b`.
 
 ## Frontend
 

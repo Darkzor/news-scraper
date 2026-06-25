@@ -44,6 +44,17 @@ class WebsiteRead(WebsiteBase):
     updated_at: datetime
 
 
+class SelectorSuggestionRequest(BaseModel):
+    base_url: HttpUrl
+
+
+class SelectorSuggestionRead(BaseModel):
+    discovery_selector: str = Field(min_length=1, max_length=512)
+    title_selector: str = Field(min_length=1, max_length=512)
+    description_selector: str = Field(min_length=1, max_length=512)
+    content_selector: str = Field(min_length=1, max_length=512)
+
+
 class ArticleRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

@@ -28,6 +28,10 @@ export type ScrapeJob = {
 };
 
 export type WebsitePayload = Omit<Website, "id">;
+export type SelectorSuggestion = Pick<
+  Website,
+  "discovery_selector" | "title_selector" | "description_selector" | "content_selector"
+>;
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
@@ -53,6 +57,11 @@ export const api = {
   updateWebsite: (id: number, payload: Partial<WebsitePayload>) =>
     request<Website>(`/websites/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   deleteWebsite: (id: number) => request<void>(`/websites/${id}`, { method: "DELETE" }),
+  suggestSelectors: (base_url: string) =>
+    request<SelectorSuggestion>("/selector-suggestions", {
+      method: "POST",
+      body: JSON.stringify({ base_url })
+    }),
   triggerScrape: (id: number) => request<ScrapeJob>(`/websites/${id}/scrape`, { method: "POST" }),
   listScrapeJobs: () => request<ScrapeJob[]>("/scrape-jobs"),
   listArticles: () => request<Article[]>("/articles")

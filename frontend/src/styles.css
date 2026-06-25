@@ -47,6 +47,11 @@ button:hover {
   background: #163d70;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .app-shell {
   display: grid;
   grid-template-columns: 17rem minmax(0, 1fr);
@@ -193,6 +198,12 @@ button:hover {
 form {
   display: grid;
   gap: 0.8rem;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 label {
