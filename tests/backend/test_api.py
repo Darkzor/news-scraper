@@ -28,19 +28,33 @@ def test_health_and_readiness(client: TestClient) -> None:
 
 
 def test_website_crud_workflow(client: TestClient) -> None:
-    created = client.post("/api/websites", json=website_payload()).json()
+    created = client.post(
+        "/api/websites",
+        json=website_payload(target_topics="politics, science, AI"),
+    ).json()
     website_id = created["id"]
 
     assert created["name"] == "Example News"
+    assert created["target_topics"] == "politics, science, AI"
     assert client.get("/api/websites").json()[0]["id"] == website_id
     assert client.get(f"/api/websites/{website_id}").json()["base_url"] == "https://example.test/"
 
-    updated = client.patch(f"/api/websites/{website_id}", json={"name": "Example Daily"}).json()
+    updated = client.patch(
+        f"/api/websites/{website_id}",
+        json={"name": "Example Daily", "target_topics": "local government"},
+    ).json()
     assert updated["name"] == "Example Daily"
+    assert updated["target_topics"] == "local government"
 
     response = client.delete(f"/api/websites/{website_id}")
     assert response.status_code == 204
     assert client.get(f"/api/websites/{website_id}").status_code == 404
+
+
+def test_website_target_topics_are_optional(client: TestClient) -> None:
+    created = client.post("/api/websites", json=website_payload()).json()
+
+    assert created["target_topics"] is None
 
 
 def test_validation_duplicate_and_not_found_errors(client: TestClient) -> None:
@@ -89,6 +103,7 @@ def test_scrape_job_create_list_and_status(client: TestClient, monkeypatch) -> N
         job.status = "succeeded"
         job.discovered_urls = ["https://example.test/news/alpha"]
         job.saved_articles = 1
+        job.skipped_articles = 2
         session.commit()
 
     monkeypatch.setattr("news_scraper_backend.api.router.run_scrape_job", fake_run_scrape_job)
@@ -98,6 +113,7 @@ def test_scrape_job_create_list_and_status(client: TestClient, monkeypatch) -> N
     job = client.get(f"/api/scrape-jobs/{created.json()['id']}").json()
     assert job["status"] == "succeeded"
     assert job["saved_articles"] == 1
+    assert job["skipped_articles"] == 2
     assert client.get("/api/scrape-jobs").json()[0]["id"] == created.json()["id"]
 
 

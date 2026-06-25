@@ -25,6 +25,9 @@ class Settings(BaseModel):
     ollama_timeout_ms: int = Field(default=60_000)
     ollama_auth_header: str | None = Field(default=None)
     selector_inference_max_html_chars: int = Field(default=30_000)
+    content_qa_enabled: bool = Field(default=True)
+    content_qa_max_blocks: int = Field(default=80)
+    content_qa_min_block_chars: int = Field(default=40)
 
 
 _ENV_TO_FIELD = {
@@ -43,6 +46,9 @@ _ENV_TO_FIELD = {
     "NEWS_SCRAPER_OLLAMA_TIMEOUT_MS": "ollama_timeout_ms",
     "NEWS_SCRAPER_OLLAMA_AUTH_HEADER": "ollama_auth_header",
     "NEWS_SCRAPER_SELECTOR_INFERENCE_MAX_HTML_CHARS": "selector_inference_max_html_chars",
+    "NEWS_SCRAPER_CONTENT_QA_ENABLED": "content_qa_enabled",
+    "NEWS_SCRAPER_CONTENT_QA_MAX_BLOCKS": "content_qa_max_blocks",
+    "NEWS_SCRAPER_CONTENT_QA_MIN_BLOCK_CHARS": "content_qa_min_block_chars",
 }
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]

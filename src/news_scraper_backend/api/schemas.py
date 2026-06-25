@@ -17,6 +17,7 @@ class WebsiteBase(BaseModel):
     title_selector: str | None = Field(default=None, max_length=512)
     description_selector: str | None = Field(default=None, max_length=512)
     content_selector: str | None = Field(default=None, max_length=512)
+    target_topics: str | None = Field(default=None, max_length=2000)
     scrape_frequency_minutes: int | None = Field(default=None, ge=1, le=10080)
 
 
@@ -32,6 +33,7 @@ class WebsiteUpdate(BaseModel):
     title_selector: str | None = Field(default=None, max_length=512)
     description_selector: str | None = Field(default=None, max_length=512)
     content_selector: str | None = Field(default=None, max_length=512)
+    target_topics: str | None = Field(default=None, max_length=2000)
     scrape_frequency_minutes: int | None = Field(default=None, ge=1, le=10080)
 
 
@@ -83,5 +85,6 @@ class ScrapeJobRead(BaseModel):
     finished_at: datetime | None
     discovered_urls: list[str]
     saved_articles: int
+    skipped_articles: int
     failure: str | None
     created_at: datetime

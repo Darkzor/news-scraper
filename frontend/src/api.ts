@@ -7,6 +7,7 @@ export type Website = {
   title_selector: string | null;
   description_selector: string | null;
   content_selector: string | null;
+  target_topics: string | null;
   scrape_frequency_minutes: number | null;
 };
 
@@ -24,6 +25,7 @@ export type ScrapeJob = {
   website_id: number;
   status: string;
   saved_articles: number;
+  skipped_articles: number;
   failure: string | null;
 };
 

@@ -23,6 +23,7 @@ class Website(Base):
     title_selector: Mapped[str | None] = mapped_column(String(512), nullable=True)
     description_selector: Mapped[str | None] = mapped_column(String(512), nullable=True)
     content_selector: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    target_topics: Mapped[str | None] = mapped_column(Text, nullable=True)
     scrape_frequency_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
@@ -62,6 +63,7 @@ class ScrapeJob(Base):
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     discovered_urls: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     saved_articles: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    skipped_articles: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     failure: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

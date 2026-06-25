@@ -1,5 +1,8 @@
+import sqlite3
+
 from news_scraper_backend.core.config import Settings, get_settings
 from news_scraper_backend.main import create_app
+from news_scraper_backend.storage.database import init_database
 
 
 def test_create_app_exposes_configured_openapi_metadata() -> None:
@@ -25,6 +28,63 @@ def test_create_app_stores_resolved_settings() -> None:
     assert app.state.settings is settings
 
 
+def test_init_database_upgrades_existing_sqlite_schema(tmp_path) -> None:
+    database_path = tmp_path / "legacy.db"
+    connection = sqlite3.connect(database_path)
+    try:
+        connection.execute(
+            """
+            CREATE TABLE websites (
+                id INTEGER PRIMARY KEY,
+                name VARCHAR(160) NOT NULL,
+                base_url VARCHAR(2048) NOT NULL,
+                enabled BOOLEAN NOT NULL,
+                discovery_selector VARCHAR(512) NOT NULL,
+                title_selector VARCHAR(512),
+                description_selector VARCHAR(512),
+                content_selector VARCHAR(512),
+                scrape_frequency_minutes INTEGER,
+                created_at DATETIME,
+                updated_at DATETIME
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE scrape_jobs (
+                id INTEGER PRIMARY KEY,
+                website_id INTEGER NOT NULL,
+                status VARCHAR(32) NOT NULL,
+                started_at DATETIME,
+                finished_at DATETIME,
+                discovered_urls JSON NOT NULL,
+                saved_articles INTEGER NOT NULL,
+                failure TEXT,
+                created_at DATETIME
+            )
+            """
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    init_database(f"sqlite:///{database_path}")
+
+    connection = sqlite3.connect(database_path)
+    try:
+        website_columns = {
+            row[1] for row in connection.execute("PRAGMA table_info(websites)").fetchall()
+        }
+        job_columns = {
+            row[1] for row in connection.execute("PRAGMA table_info(scrape_jobs)").fetchall()
+        }
+    finally:
+        connection.close()
+
+    assert "target_topics" in website_columns
+    assert "skipped_articles" in job_columns
+
+
 def test_get_settings_reads_environment(monkeypatch) -> None:
     get_settings.cache_clear()
     monkeypatch.setenv("NEWS_SCRAPER_APP_NAME", "Env News API")
@@ -42,6 +102,9 @@ def test_get_settings_reads_environment(monkeypatch) -> None:
     monkeypatch.setenv("NEWS_SCRAPER_OLLAMA_TIMEOUT_MS", "5000")
     monkeypatch.setenv("NEWS_SCRAPER_OLLAMA_AUTH_HEADER", "Bearer token")
     monkeypatch.setenv("NEWS_SCRAPER_SELECTOR_INFERENCE_MAX_HTML_CHARS", "12345")
+    monkeypatch.setenv("NEWS_SCRAPER_CONTENT_QA_ENABLED", "false")
+    monkeypatch.setenv("NEWS_SCRAPER_CONTENT_QA_MAX_BLOCKS", "12")
+    monkeypatch.setenv("NEWS_SCRAPER_CONTENT_QA_MIN_BLOCK_CHARS", "34")
 
     settings = get_settings()
 
@@ -61,6 +124,9 @@ def test_get_settings_reads_environment(monkeypatch) -> None:
         ollama_timeout_ms=5000,
         ollama_auth_header="Bearer token",
         selector_inference_max_html_chars=12345,
+        content_qa_enabled=False,
+        content_qa_max_blocks=12,
+        content_qa_min_block_chars=34,
     )
     get_settings.cache_clear()
 
@@ -87,6 +153,9 @@ def test_get_settings_reads_dotenv_file(tmp_path, monkeypatch) -> None:
                 "NEWS_SCRAPER_OLLAMA_TIMEOUT_MS=6000",
                 "NEWS_SCRAPER_OLLAMA_AUTH_HEADER='Bearer dotenv'",
                 "NEWS_SCRAPER_SELECTOR_INFERENCE_MAX_HTML_CHARS=23456",
+                "NEWS_SCRAPER_CONTENT_QA_ENABLED=true",
+                "NEWS_SCRAPER_CONTENT_QA_MAX_BLOCKS=56",
+                "NEWS_SCRAPER_CONTENT_QA_MIN_BLOCK_CHARS=78",
             ]
         ),
         encoding="utf-8",
@@ -110,6 +179,9 @@ def test_get_settings_reads_dotenv_file(tmp_path, monkeypatch) -> None:
         ollama_timeout_ms=6000,
         ollama_auth_header="Bearer dotenv",
         selector_inference_max_html_chars=23456,
+        content_qa_enabled=True,
+        content_qa_max_blocks=56,
+        content_qa_min_block_chars=78,
     )
     get_settings.cache_clear()
 

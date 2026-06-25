@@ -12,6 +12,7 @@ const emptyForm = {
   title_selector: "",
   description_selector: "",
   content_selector: "",
+  target_topics: "",
   scrape_frequency_minutes: ""
 };
 
@@ -24,6 +25,7 @@ function toPayload(form: typeof emptyForm): WebsitePayload {
     title_selector: form.title_selector || null,
     description_selector: form.description_selector || null,
     content_selector: form.content_selector || null,
+    target_topics: form.target_topics || null,
     scrape_frequency_minutes: form.scrape_frequency_minutes
       ? Number(form.scrape_frequency_minutes)
       : null
@@ -90,6 +92,7 @@ function App() {
       title_selector: website.title_selector || "",
       description_selector: website.description_selector || "",
       content_selector: website.content_selector || "",
+      target_topics: website.target_topics || "",
       scrape_frequency_minutes: website.scrape_frequency_minutes?.toString() || ""
     });
   }
@@ -248,6 +251,13 @@ function App() {
                   />
                 </label>
                 <label>
+                  Topics to crawl
+                  <textarea
+                    value={form.target_topics}
+                    onChange={(event) => setForm({ ...form, target_topics: event.target.value })}
+                  />
+                </label>
+                <label>
                   Scrape frequency minutes
                   <input
                     min="1"
@@ -285,6 +295,7 @@ function App() {
                   <div>
                     <strong>{website.name}</strong>
                     <span>{website.base_url}</span>
+                    {website.target_topics ? <small>Topics: {website.target_topics}</small> : null}
                     <small>{website.enabled ? "Enabled" : "Disabled"}</small>
                   </div>
                   <div className="actions">
@@ -302,6 +313,7 @@ function App() {
                   <strong>Job {job.id}</strong>
                   <span>{job.status}</span>
                   <span>{job.saved_articles} saved</span>
+                  <span>{job.skipped_articles} skipped</span>
                   <span>{job.failure || "No failure"}</span>
                 </article>
               ))}

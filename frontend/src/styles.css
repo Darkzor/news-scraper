@@ -35,12 +35,19 @@ button {
   cursor: pointer;
 }
 
-input {
+input,
+textarea {
   min-height: 2.5rem;
   border: 1px solid #cdd8e3;
   border-radius: 6px;
   padding: 0 0.75rem;
   font: inherit;
+}
+
+textarea {
+  min-height: 5rem;
+  padding: 0.65rem 0.75rem;
+  resize: vertical;
 }
 
 button:hover {
@@ -244,7 +251,7 @@ label {
 }
 
 .row.compact {
-  grid-template-columns: 5rem 1fr 1fr 2fr;
+  grid-template-columns: 5rem 1fr 1fr 1fr 2fr;
 }
 
 .actions {

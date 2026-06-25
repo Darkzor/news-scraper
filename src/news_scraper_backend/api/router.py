@@ -5,6 +5,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from news_scraper_backend.api import schemas
+from news_scraper_backend.scraper.content_quality import ContentQualityService
 from news_scraper_backend.scraper.selector_inference import (
     OllamaSelectorClient,
     OllamaSelectorError,
@@ -12,6 +13,7 @@ from news_scraper_backend.scraper.selector_inference import (
     SelectorValidationError,
 )
 from news_scraper_backend.scraper.service import PlaywrightScraper, run_scrape_job
+from news_scraper_backend.scraper.topic_relevance import TopicRelevanceService
 from news_scraper_backend.storage import repository
 from news_scraper_backend.storage.database import get_session
 
@@ -137,10 +139,26 @@ def _create_scrape_job(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Website not found")
     job = repository.create_scrape_job(session, website_id)
     settings = request.app.state.settings
+    ollama = OllamaSelectorClient(
+        base_url=settings.ollama_base_url,
+        model=settings.ollama_model,
+        timeout_ms=settings.ollama_timeout_ms,
+        auth_header=settings.ollama_auth_header,
+    )
+    topic_relevance = TopicRelevanceService(ollama=ollama)
+    content_quality = None
+    if settings.content_qa_enabled:
+        content_quality = ContentQualityService(
+            ollama=ollama,
+            max_blocks=settings.content_qa_max_blocks,
+            min_block_chars=settings.content_qa_min_block_chars,
+        )
     scraper = PlaywrightScraper(
         timeout_ms=settings.scraper_timeout_ms,
         max_articles=settings.scraper_max_articles,
         retries=settings.scraper_retries,
+        content_quality=content_quality,
+        topic_relevance=topic_relevance,
     )
     background_tasks.add_task(run_scrape_job, session, job, scraper)
     return job

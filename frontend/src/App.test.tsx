@@ -12,6 +12,7 @@ const website = {
   title_selector: null,
   description_selector: null,
   content_selector: null,
+  target_topics: "politics, science, AI",
   scrape_frequency_minutes: 60
 };
 
@@ -33,10 +34,26 @@ beforeEach(() => {
       });
     }
     if (url === "/api/websites/1/scrape" && init.method === "POST") {
-      return Response.json({ id: 7, website_id: 1, status: "succeeded", saved_articles: 1, failure: null });
+      return Response.json({
+        id: 7,
+        website_id: 1,
+        status: "succeeded",
+        saved_articles: 1,
+        skipped_articles: 2,
+        failure: null
+      });
     }
     if (url === "/api/scrape-jobs" && !init.method) {
-      return Response.json([{ id: 5, website_id: 1, status: "failed", saved_articles: 0, failure: "Timeout" }]);
+      return Response.json([
+        {
+          id: 5,
+          website_id: 1,
+          status: "failed",
+          saved_articles: 0,
+          skipped_articles: 3,
+          failure: "Timeout"
+        }
+      ]);
     }
     if (url === "/api/articles" && !init.method) {
       return Response.json([
@@ -64,11 +81,14 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByText("Example News")).toBeInTheDocument();
+    expect(await screen.findByText("Topics: politics, science, AI")).toBeInTheDocument();
     expect(await screen.findByText("Timeout")).toBeInTheDocument();
+    expect(await screen.findByText("3 skipped")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Scrape" }));
 
     expect(await screen.findByText("Scrape job 7 succeeded.")).toBeInTheDocument();
+    expect(await screen.findByText("2 skipped")).toBeInTheDocument();
   });
 
   it("creates a website through the form", async () => {
@@ -79,14 +99,27 @@ describe("App", () => {
     await user.type(screen.getByLabelText("Name"), "Added News");
     await user.clear(screen.getByLabelText("Base URL"));
     await user.type(screen.getByLabelText("Base URL"), "https://added.test");
+    await user.type(screen.getByLabelText("Topics to crawl"), "politics, science, AI");
     await user.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => {
       expect(globalThis.fetch).toHaveBeenCalledWith(
         "/api/websites",
-        expect.objectContaining({ method: "POST" })
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"target_topics":"politics, science, AI"')
+        })
       );
     });
+  });
+
+  it("loads target topics into the edit form", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("button", { name: "Edit" }));
+
+    expect(screen.getByLabelText("Topics to crawl")).toHaveValue("politics, science, AI");
   });
 
   it("infers selectors and fills the website form", async () => {

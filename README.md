@@ -47,11 +47,24 @@ from `.env`.
 - `NEWS_SCRAPER_OLLAMA_TIMEOUT_MS`
 - `NEWS_SCRAPER_OLLAMA_AUTH_HEADER`
 - `NEWS_SCRAPER_SELECTOR_INFERENCE_MAX_HTML_CHARS`
+- `NEWS_SCRAPER_CONTENT_QA_ENABLED`
+- `NEWS_SCRAPER_CONTENT_QA_MAX_BLOCKS`
+- `NEWS_SCRAPER_CONTENT_QA_MIN_BLOCK_CHARS`
 
 Selector inference uses the configured Ollama endpoint to ask Qwen for CSS
 selectors, then validates those selectors against rendered pages before the
 admin UI fills the form. The default local example points at
 `http://172.16.15.201:11434` with model `qwen3.6:35b-a3b`.
+
+When content QA is enabled, article extraction uses the same Ollama/Qwen
+configuration as an advisory filter for unrelated embedded text blocks. Qwen
+failures are logged and do not fail scrape jobs.
+
+Websites can also define `target_topics`, such as `politics, science, AI`.
+When topics are present, scrape jobs ask Qwen to classify each discovered
+article candidate from the index-page title and short description before opening
+the article URL. Candidates are crawled when they match any configured topic;
+Qwen failures fail closed for those candidates and increment the skipped count.
 
 ## Frontend
 
