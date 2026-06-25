@@ -13,6 +13,9 @@ class Settings(BaseModel):
     app_name: str = Field(default="News Scraper API")
     app_version: str = Field(default="0.1.0")
     api_prefix: str = Field(default="/api")
+    backend_host: str = Field(default="127.0.0.1")
+    backend_port: int = Field(default=8000)
+    frontend_port: int = Field(default=5173)
     database_url: str = Field(default="sqlite:///./news_scraper.db")
     scraper_timeout_ms: int = Field(default=15_000)
     scraper_max_articles: int = Field(default=20)
@@ -23,6 +26,9 @@ _ENV_TO_FIELD = {
     "NEWS_SCRAPER_APP_NAME": "app_name",
     "NEWS_SCRAPER_APP_VERSION": "app_version",
     "NEWS_SCRAPER_API_PREFIX": "api_prefix",
+    "NEWS_SCRAPER_BACKEND_HOST": "backend_host",
+    "NEWS_SCRAPER_BACKEND_PORT": "backend_port",
+    "NEWS_SCRAPER_FRONTEND_PORT": "frontend_port",
     "NEWS_SCRAPER_DATABASE_URL": "database_url",
     "NEWS_SCRAPER_TIMEOUT_MS": "scraper_timeout_ms",
     "NEWS_SCRAPER_MAX_ARTICLES": "scraper_max_articles",

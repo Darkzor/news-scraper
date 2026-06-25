@@ -7,8 +7,8 @@ Run the backend and frontend as separate services in staging.
 ```bash
 python3 -m venv .venv
 .venv/bin/python -m pip install -e ".[dev]"
-NEWS_SCRAPER_DATABASE_URL=sqlite:///./news_scraper.db \
-  .venv/bin/python -m uvicorn news_scraper_backend.main:app --host 127.0.0.1 --port 8000
+cp .env.example .env
+.venv/bin/python scripts/run_backend.py
 ```
 
 Install Playwright's Chromium runtime before live browser scraping:

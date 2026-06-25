@@ -30,6 +30,9 @@ def test_get_settings_reads_environment(monkeypatch) -> None:
     monkeypatch.setenv("NEWS_SCRAPER_APP_NAME", "Env News API")
     monkeypatch.setenv("NEWS_SCRAPER_APP_VERSION", "1.2.3")
     monkeypatch.setenv("NEWS_SCRAPER_API_PREFIX", "/env-api")
+    monkeypatch.setenv("NEWS_SCRAPER_BACKEND_HOST", "0.0.0.0")
+    monkeypatch.setenv("NEWS_SCRAPER_BACKEND_PORT", "9000")
+    monkeypatch.setenv("NEWS_SCRAPER_FRONTEND_PORT", "5174")
     monkeypatch.setenv("NEWS_SCRAPER_DATABASE_URL", "sqlite:///env.db")
     monkeypatch.setenv("NEWS_SCRAPER_TIMEOUT_MS", "1234")
     monkeypatch.setenv("NEWS_SCRAPER_MAX_ARTICLES", "7")
@@ -41,6 +44,9 @@ def test_get_settings_reads_environment(monkeypatch) -> None:
         app_name="Env News API",
         app_version="1.2.3",
         api_prefix="/env-api",
+        backend_host="0.0.0.0",
+        backend_port=9000,
+        frontend_port=5174,
         database_url="sqlite:///env.db",
         scraper_timeout_ms=1234,
         scraper_max_articles=7,
@@ -59,6 +65,9 @@ def test_get_settings_reads_dotenv_file(tmp_path, monkeypatch) -> None:
                 "NEWS_SCRAPER_APP_NAME='Dotenv News API'",
                 "NEWS_SCRAPER_APP_VERSION=2.0.0",
                 "NEWS_SCRAPER_API_PREFIX=/dotenv-api",
+                "NEWS_SCRAPER_BACKEND_HOST=0.0.0.0",
+                "NEWS_SCRAPER_BACKEND_PORT=9100",
+                "NEWS_SCRAPER_FRONTEND_PORT=5175",
                 "NEWS_SCRAPER_DATABASE_URL=sqlite:///dotenv.db",
                 "NEWS_SCRAPER_TIMEOUT_MS=4321",
                 "NEWS_SCRAPER_MAX_ARTICLES=11",
@@ -74,6 +83,9 @@ def test_get_settings_reads_dotenv_file(tmp_path, monkeypatch) -> None:
         app_name="Dotenv News API",
         app_version="2.0.0",
         api_prefix="/dotenv-api",
+        backend_host="0.0.0.0",
+        backend_port=9100,
+        frontend_port=5175,
         database_url="sqlite:///dotenv.db",
         scraper_timeout_ms=4321,
         scraper_max_articles=11,

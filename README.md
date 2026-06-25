@@ -19,7 +19,7 @@ Local development commands:
 python3 -m venv .venv
 .venv/bin/python -m pip install -e '.[dev]'
 cp .env.example .env
-.venv/bin/python -m uvicorn news_scraper_backend.main:app --reload
+.venv/bin/python scripts/run_backend.py
 ```
 
 Run backend tests:
@@ -35,6 +35,9 @@ from `.env`.
 - `NEWS_SCRAPER_APP_NAME`
 - `NEWS_SCRAPER_APP_VERSION`
 - `NEWS_SCRAPER_API_PREFIX`
+- `NEWS_SCRAPER_BACKEND_HOST`
+- `NEWS_SCRAPER_BACKEND_PORT`
+- `NEWS_SCRAPER_FRONTEND_PORT`
 - `NEWS_SCRAPER_DATABASE_URL`
 - `NEWS_SCRAPER_TIMEOUT_MS`
 - `NEWS_SCRAPER_MAX_ARTICLES`
@@ -52,6 +55,10 @@ cd frontend
 npm install
 npm run dev
 ```
+
+The Vite development server reads `NEWS_SCRAPER_FRONTEND_PORT`,
+`NEWS_SCRAPER_BACKEND_HOST`, and `NEWS_SCRAPER_BACKEND_PORT` from the repository
+root `.env` file.
 
 Run frontend checks:
 

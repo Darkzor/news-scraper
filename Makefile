@@ -10,7 +10,7 @@ install-frontend:
 	npm --prefix frontend install
 
 dev-backend:
-	.venv/bin/python -m uvicorn news_scraper_backend.main:app --reload --host 127.0.0.1 --port 8000
+	.venv/bin/python scripts/run_backend.py
 
 dev-frontend:
 	npm --prefix frontend run dev
