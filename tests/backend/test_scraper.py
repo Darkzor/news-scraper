@@ -30,6 +30,27 @@ class FakePage:
         return FakeLocator()
 
 
+class FakeDiscoveryLocator:
+    async def evaluate_all(self, script: str) -> list[str]:
+        return ["https://www.example.test/news/alpha", "https://external.test/news/ignored"]
+
+
+class FakeDiscoveryPage:
+    url = "https://www.example.test/"
+
+    def locator(self, selector: str) -> FakeDiscoveryLocator:
+        assert selector == "a.article"
+        return FakeDiscoveryLocator()
+
+    async def content(self) -> str:
+        return ""
+
+
+class FakeWebsite:
+    base_url = "https://example.test/"
+    discovery_selector = "a.article"
+
+
 def test_discovers_same_site_article_urls_from_fixture() -> None:
     html = (FIXTURES / "sample_index.html").read_text()
     urls = discover_article_urls_from_html("https://example.test", html)
@@ -56,3 +77,11 @@ def test_playwright_selector_text_reads_meta_content_attribute() -> None:
     text = asyncio.run(scraper._selector_text(FakePage(), "meta[name='description']"))
 
     assert text == "A concise article description"
+
+
+def test_discovery_uses_rendered_page_url_after_redirect() -> None:
+    scraper = PlaywrightScraper(max_articles=20)
+
+    urls = asyncio.run(scraper._discover_urls(FakeDiscoveryPage(), FakeWebsite()))
+
+    assert urls == ["https://www.example.test/news/alpha"]
