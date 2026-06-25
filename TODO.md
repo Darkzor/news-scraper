@@ -67,3 +67,4 @@ This checklist is the implementation backlog for the news scraper. Agents should
 - [x] Add configurable scrape frequency per website
 - [x] Add duplicate article detection
 - [x] Add deployment documentation for staging
+- [x] Add .env file loading for backend configuration

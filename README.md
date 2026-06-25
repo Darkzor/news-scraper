@@ -18,6 +18,7 @@ Local development commands:
 ```bash
 python3 -m venv .venv
 .venv/bin/python -m pip install -e '.[dev]'
+cp .env.example .env
 .venv/bin/python -m uvicorn news_scraper_backend.main:app --reload
 ```
 
@@ -27,7 +28,9 @@ Run backend tests:
 .venv/bin/python -m pytest tests/backend
 ```
 
-Configuration can be provided with environment variables:
+Configuration can be provided with environment variables or a local `.env` file
+copied from `.env.example`. Values from the process environment override values
+from `.env`.
 
 - `NEWS_SCRAPER_APP_NAME`
 - `NEWS_SCRAPER_APP_VERSION`

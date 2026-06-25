@@ -47,3 +47,53 @@ def test_get_settings_reads_environment(monkeypatch) -> None:
         scraper_retries=2,
     )
     get_settings.cache_clear()
+
+
+def test_get_settings_reads_dotenv_file(tmp_path, monkeypatch) -> None:
+    get_settings.cache_clear()
+    monkeypatch.chdir(tmp_path)
+    tmp_path.joinpath(".env").write_text(
+        "\n".join(
+            [
+                "# local backend settings",
+                "NEWS_SCRAPER_APP_NAME='Dotenv News API'",
+                "NEWS_SCRAPER_APP_VERSION=2.0.0",
+                "NEWS_SCRAPER_API_PREFIX=/dotenv-api",
+                "NEWS_SCRAPER_DATABASE_URL=sqlite:///dotenv.db",
+                "NEWS_SCRAPER_TIMEOUT_MS=4321",
+                "NEWS_SCRAPER_MAX_ARTICLES=11",
+                "export NEWS_SCRAPER_RETRIES=3",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    settings = get_settings()
+
+    assert settings == Settings(
+        app_name="Dotenv News API",
+        app_version="2.0.0",
+        api_prefix="/dotenv-api",
+        database_url="sqlite:///dotenv.db",
+        scraper_timeout_ms=4321,
+        scraper_max_articles=11,
+        scraper_retries=3,
+    )
+    get_settings.cache_clear()
+
+
+def test_get_settings_environment_overrides_dotenv_file(tmp_path, monkeypatch) -> None:
+    get_settings.cache_clear()
+    monkeypatch.chdir(tmp_path)
+    tmp_path.joinpath(".env").write_text(
+        "NEWS_SCRAPER_APP_NAME=Dotenv News API\n"
+        "NEWS_SCRAPER_MAX_ARTICLES=5\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("NEWS_SCRAPER_APP_NAME", "Process Env News API")
+
+    settings = get_settings()
+
+    assert settings.app_name == "Process Env News API"
+    assert settings.scraper_max_articles == 5
+    get_settings.cache_clear()

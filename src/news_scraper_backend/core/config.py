@@ -1,7 +1,8 @@
 """Runtime configuration for the FastAPI backend."""
 
 from functools import lru_cache
-from os import getenv
+from os import environ
+from pathlib import Path
 
 from pydantic import BaseModel, Field
 
@@ -18,37 +19,76 @@ class Settings(BaseModel):
     scraper_retries: int = Field(default=1)
 
 
+_ENV_TO_FIELD = {
+    "NEWS_SCRAPER_APP_NAME": "app_name",
+    "NEWS_SCRAPER_APP_VERSION": "app_version",
+    "NEWS_SCRAPER_API_PREFIX": "api_prefix",
+    "NEWS_SCRAPER_DATABASE_URL": "database_url",
+    "NEWS_SCRAPER_TIMEOUT_MS": "scraper_timeout_ms",
+    "NEWS_SCRAPER_MAX_ARTICLES": "scraper_max_articles",
+    "NEWS_SCRAPER_RETRIES": "scraper_retries",
+}
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _default_env_files() -> tuple[Path, ...]:
+    """Return supported .env locations in increasing precedence order."""
+
+    paths = (_PROJECT_ROOT / ".env", Path.cwd() / ".env")
+    return tuple(dict.fromkeys(paths))
+
+
+def _parse_env_value(raw_value: str) -> str:
+    value = raw_value.strip()
+    if not value:
+        return value
+    if value[0] in {"'", '"'} and value[-1:] == value[0]:
+        return value[1:-1]
+    if " #" in value:
+        value = value.split(" #", 1)[0].rstrip()
+    return value
+
+
+def _read_env_file(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    if not path.is_file():
+        return values
+
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line.removeprefix("export ").strip()
+        if "=" not in line:
+            continue
+
+        key, raw_value = line.split("=", 1)
+        key = key.strip()
+        if key:
+            values[key] = _parse_env_value(raw_value)
+
+    return values
+
+
+def _settings_environment() -> dict[str, str]:
+    values: dict[str, str] = {}
+    for path in _default_env_files():
+        values.update(_read_env_file(path))
+    values.update(environ)
+    return values
+
+
 @lru_cache
 def get_settings() -> Settings:
-    """Return settings from environment variables with project defaults."""
+    """Return settings from .env files and environment variables."""
 
+    environment = _settings_environment()
     return Settings(
-        app_name=getenv("NEWS_SCRAPER_APP_NAME", Settings.model_fields["app_name"].default),
-        app_version=getenv(
-            "NEWS_SCRAPER_APP_VERSION",
-            Settings.model_fields["app_version"].default,
-        ),
-        api_prefix=getenv("NEWS_SCRAPER_API_PREFIX", Settings.model_fields["api_prefix"].default),
-        database_url=getenv(
-            "NEWS_SCRAPER_DATABASE_URL",
-            Settings.model_fields["database_url"].default,
-        ),
-        scraper_timeout_ms=int(
-            getenv(
-                "NEWS_SCRAPER_TIMEOUT_MS",
-                Settings.model_fields["scraper_timeout_ms"].default,
-            )
-        ),
-        scraper_max_articles=int(
-            getenv(
-                "NEWS_SCRAPER_MAX_ARTICLES",
-                Settings.model_fields["scraper_max_articles"].default,
-            )
-        ),
-        scraper_retries=int(
-            getenv(
-                "NEWS_SCRAPER_RETRIES",
-                Settings.model_fields["scraper_retries"].default,
-            )
-        ),
+        **{
+            field_name: environment[env_name]
+            for env_name, field_name in _ENV_TO_FIELD.items()
+            if env_name in environment
+        }
     )
