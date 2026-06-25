@@ -9,6 +9,7 @@ from urllib.parse import urljoin, urlparse
 
 from sqlalchemy.orm import Session
 
+from news_scraper_backend.scraper.selector_inference import selector_text
 from news_scraper_backend.storage import models, repository
 
 logger = logging.getLogger("news_scraper.scrape_jobs")
@@ -150,13 +151,7 @@ class PlaywrightScraper:
         )
 
     async def _selector_text(self, page, selector: str | None) -> str:
-        if not selector:
-            return ""
-        try:
-            text = await page.locator(selector).first.inner_text(timeout=1_000)
-        except Exception:
-            return ""
-        return " ".join(text.split())
+        return await selector_text(page, selector)
 
 
 def run_scrape_job(session: Session, job: models.ScrapeJob, scraper: PlaywrightScraper) -> None:

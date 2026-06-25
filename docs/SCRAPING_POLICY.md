@@ -7,6 +7,8 @@ Use this scraper only for operator-configured sites where automated access and c
 - Review each target site's `robots.txt`, terms of service, and publisher policies before enabling it.
 - Do not configure sources that prohibit automated page loading or article extraction.
 - Keep selectors narrow and specific to allowed article pages.
+- Treat Qwen selector inference as an operator aid, not permission to scrape a site.
+  Review inferred selectors before saving and enabling automated runs.
 
 ## Rate Limits
 

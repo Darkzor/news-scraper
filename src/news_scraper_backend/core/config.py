@@ -20,6 +20,11 @@ class Settings(BaseModel):
     scraper_timeout_ms: int = Field(default=15_000)
     scraper_max_articles: int = Field(default=20)
     scraper_retries: int = Field(default=1)
+    ollama_base_url: str = Field(default="http://172.16.15.201:11434")
+    ollama_model: str = Field(default="qwen3.6:35b-a3b")
+    ollama_timeout_ms: int = Field(default=60_000)
+    ollama_auth_header: str | None = Field(default=None)
+    selector_inference_max_html_chars: int = Field(default=30_000)
 
 
 _ENV_TO_FIELD = {
@@ -33,6 +38,11 @@ _ENV_TO_FIELD = {
     "NEWS_SCRAPER_TIMEOUT_MS": "scraper_timeout_ms",
     "NEWS_SCRAPER_MAX_ARTICLES": "scraper_max_articles",
     "NEWS_SCRAPER_RETRIES": "scraper_retries",
+    "NEWS_SCRAPER_OLLAMA_BASE_URL": "ollama_base_url",
+    "NEWS_SCRAPER_OLLAMA_MODEL": "ollama_model",
+    "NEWS_SCRAPER_OLLAMA_TIMEOUT_MS": "ollama_timeout_ms",
+    "NEWS_SCRAPER_OLLAMA_AUTH_HEADER": "ollama_auth_header",
+    "NEWS_SCRAPER_SELECTOR_INFERENCE_MAX_HTML_CHARS": "selector_inference_max_html_chars",
 }
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]

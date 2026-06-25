@@ -37,6 +37,11 @@ def test_get_settings_reads_environment(monkeypatch) -> None:
     monkeypatch.setenv("NEWS_SCRAPER_TIMEOUT_MS", "1234")
     monkeypatch.setenv("NEWS_SCRAPER_MAX_ARTICLES", "7")
     monkeypatch.setenv("NEWS_SCRAPER_RETRIES", "2")
+    monkeypatch.setenv("NEWS_SCRAPER_OLLAMA_BASE_URL", "http://ollama.test:11434")
+    monkeypatch.setenv("NEWS_SCRAPER_OLLAMA_MODEL", "qwen-test")
+    monkeypatch.setenv("NEWS_SCRAPER_OLLAMA_TIMEOUT_MS", "5000")
+    monkeypatch.setenv("NEWS_SCRAPER_OLLAMA_AUTH_HEADER", "Bearer token")
+    monkeypatch.setenv("NEWS_SCRAPER_SELECTOR_INFERENCE_MAX_HTML_CHARS", "12345")
 
     settings = get_settings()
 
@@ -51,6 +56,11 @@ def test_get_settings_reads_environment(monkeypatch) -> None:
         scraper_timeout_ms=1234,
         scraper_max_articles=7,
         scraper_retries=2,
+        ollama_base_url="http://ollama.test:11434",
+        ollama_model="qwen-test",
+        ollama_timeout_ms=5000,
+        ollama_auth_header="Bearer token",
+        selector_inference_max_html_chars=12345,
     )
     get_settings.cache_clear()
 
@@ -72,6 +82,11 @@ def test_get_settings_reads_dotenv_file(tmp_path, monkeypatch) -> None:
                 "NEWS_SCRAPER_TIMEOUT_MS=4321",
                 "NEWS_SCRAPER_MAX_ARTICLES=11",
                 "export NEWS_SCRAPER_RETRIES=3",
+                "NEWS_SCRAPER_OLLAMA_BASE_URL=http://dotenv-ollama.test:11434",
+                "NEWS_SCRAPER_OLLAMA_MODEL=qwen-dotenv",
+                "NEWS_SCRAPER_OLLAMA_TIMEOUT_MS=6000",
+                "NEWS_SCRAPER_OLLAMA_AUTH_HEADER='Bearer dotenv'",
+                "NEWS_SCRAPER_SELECTOR_INFERENCE_MAX_HTML_CHARS=23456",
             ]
         ),
         encoding="utf-8",
@@ -90,6 +105,11 @@ def test_get_settings_reads_dotenv_file(tmp_path, monkeypatch) -> None:
         scraper_timeout_ms=4321,
         scraper_max_articles=11,
         scraper_retries=3,
+        ollama_base_url="http://dotenv-ollama.test:11434",
+        ollama_model="qwen-dotenv",
+        ollama_timeout_ms=6000,
+        ollama_auth_header="Bearer dotenv",
+        selector_inference_max_html_chars=23456,
     )
     get_settings.cache_clear()
 

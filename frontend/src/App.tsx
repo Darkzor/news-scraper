@@ -39,6 +39,7 @@ function App() {
   const [editing, setEditing] = useState<Website | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(true);
+  const [inferringSelectors, setInferringSelectors] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -121,6 +122,28 @@ function App() {
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Delete failed");
+    }
+  }
+
+  async function inferSelectors() {
+    if (!form.base_url) return;
+    setError("");
+    setMessage("");
+    setInferringSelectors(true);
+    try {
+      const suggestion = await api.suggestSelectors(form.base_url);
+      setForm((current) => ({
+        ...current,
+        discovery_selector: suggestion.discovery_selector,
+        title_selector: suggestion.title_selector || "",
+        description_selector: suggestion.description_selector || "",
+        content_selector: suggestion.content_selector || ""
+      }));
+      setMessage("Selectors inferred. Review and save.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Selector inference failed");
+    } finally {
+      setInferringSelectors(false);
     }
   }
 
@@ -241,7 +264,16 @@ function App() {
                   />
                   Enabled
                 </label>
-                <button type="submit">Save</button>
+                <div className="form-actions">
+                  <button
+                    disabled={!form.base_url || inferringSelectors}
+                    type="button"
+                    onClick={inferSelectors}
+                  >
+                    {inferringSelectors ? "Inferring selectors" : "Infer selectors"}
+                  </button>
+                  <button type="submit">Save</button>
+                </div>
               </form>
             </section>
 
