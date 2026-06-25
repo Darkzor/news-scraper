@@ -122,6 +122,7 @@ class PlaywrightScraper:
         raise RuntimeError(f"Failed to load {url}: {last_error}") from last_error
 
     async def _discover_urls(self, page, website: models.Website) -> list[str]:
+        base_url = page.url or website.base_url
         try:
             hrefs = await page.locator(website.discovery_selector).evaluate_all(
                 "(els) => els.map((el) => el.href || el.getAttribute('href')).filter(Boolean)"
@@ -131,14 +132,14 @@ class PlaywrightScraper:
         urls: list[str] = []
         seen: set[str] = set()
         for href in hrefs:
-            absolute = normalize_url(website.base_url, href)
-            if absolute and absolute not in seen and urlparse(absolute).netloc == urlparse(website.base_url).netloc:
+            absolute = normalize_url(base_url, href)
+            if absolute and absolute not in seen and urlparse(absolute).netloc == urlparse(base_url).netloc:
                 seen.add(absolute)
                 urls.append(absolute)
                 if len(urls) >= self.max_articles:
                     return urls
         return urls or discover_article_urls_from_html(
-            website.base_url, await page.content(), self.max_articles
+            base_url, await page.content(), self.max_articles
         )
 
     async def _extract_article(self, page, url: str, website: models.Website) -> ExtractedArticle:

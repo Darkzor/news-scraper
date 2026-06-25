@@ -9,9 +9,11 @@ import pytest
 from news_scraper_backend.scraper.selector_inference import (
     OllamaSelectorClient,
     OllamaSelectorError,
+    DiscoverySuggestion,
     SelectorInferenceService,
     SelectorSuggestion,
     SelectorValidationError,
+    _parse_json_object,
     selector_text,
 )
 
@@ -80,7 +82,26 @@ def test_ollama_client_returns_json_response() -> None:
         payload = json.loads(request.content)
         assert payload["model"] == "qwen-test"
         assert payload["stream"] is False
+        assert payload["think"] is False
+        assert payload["options"]["num_predict"] == 256
         return httpx.Response(200, json={"response": "{\"title_selector\":\"h1\"}"})
+
+    result = run(
+        ollama_client(httpx.MockTransport(handler)).generate_json(
+            prompt="Return JSON",
+            schema={"type": "object"},
+        )
+    )
+
+    assert result == {"title_selector": "h1"}
+
+
+def test_ollama_client_parses_json_wrapped_in_prose() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={"response": "Here is the JSON:\\n```json\\n{\"title_selector\":\"h1\"}\\n```"},
+        )
 
     result = run(
         ollama_client(httpx.MockTransport(handler)).generate_json(
@@ -98,6 +119,20 @@ def test_ollama_client_rejects_invalid_json_response() -> None:
 
     with pytest.raises(OllamaSelectorError, match="not valid JSON"):
         run(ollama_client(httpx.MockTransport(handler)).generate_json(prompt="x", schema={}))
+
+
+def test_ollama_client_rejects_blank_json_response() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"response": ""})
+
+    with pytest.raises(OllamaSelectorError, match="blank"):
+        run(ollama_client(httpx.MockTransport(handler)).generate_json(prompt="x", schema={}))
+
+
+def test_parse_json_object_skips_invalid_braces_before_valid_object() -> None:
+    assert _parse_json_object("not json {broken then {\"title_selector\":\"h1\"}") == {
+        "title_selector": "h1"
+    }
 
 
 def test_ollama_client_reports_model_missing_status() -> None:
@@ -158,9 +193,9 @@ def test_selector_inference_validates_qwen_selectors_against_fake_pages() -> Non
     )
 
     discovery = run(service._suggest_discovery(index_page, "https://example.test"))
-    assert run(service._validated_sample_url(index_page, "https://example.test", discovery)) == (
-        "https://example.test/news/alpha"
-    )
+    validated_discovery = run(service._validated_discovery(index_page, "https://example.test", discovery))
+    assert validated_discovery.discovery_selector == "main a.article-link"
+    assert validated_discovery.sample_article_url == "https://example.test/news/alpha"
     article_selectors = run(service._suggest_article_selectors(article_page, "https://example.test/news/alpha"))
     run(service._validate_article_selectors(article_page, article_selectors))
 
@@ -175,6 +210,36 @@ def test_selector_inference_validates_qwen_selectors_against_fake_pages() -> Non
         description_selector="meta[name='description']",
         content_selector="article",
     )
+
+
+def test_selector_inference_repairs_invalid_discovery_selector_from_sample_url() -> None:
+    page = FakePage(
+        {
+            "article.article-alt a.article-title": FakeLocator(hrefs=[]),
+            "article .article-title a": FakeLocator(
+                hrefs=["https://www.example.test/news/alpha"]
+            ),
+        }
+    )
+    service = SelectorInferenceService(
+        ollama=FakeOllama([]),
+        timeout_ms=1000,
+        max_html_chars=1000,
+    )
+
+    discovery = run(
+        service._validated_discovery(
+            page,
+            "https://www.example.test/",
+            discovery=DiscoverySuggestion(
+                discovery_selector="article.article-alt a.article-title",
+                sample_article_url="https://www.example.test/news/alpha",
+            ),
+        )
+    )
+
+    assert discovery.discovery_selector == "article .article-title a"
+    assert discovery.sample_article_url == "https://www.example.test/news/alpha"
 
 
 def test_selector_inference_rejects_selectors_without_text() -> None:

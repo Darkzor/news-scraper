@@ -86,8 +86,9 @@ class OllamaSelectorClient:
             "model": self.model,
             "prompt": prompt,
             "stream": False,
+            "think": False,
             "format": schema,
-            "options": {"temperature": 0},
+            "options": {"temperature": 0, "num_predict": 256},
         }
 
         try:
@@ -113,10 +114,7 @@ class OllamaSelectorClient:
         if not isinstance(raw_response, str):
             raise OllamaSelectorError("ollama response did not include JSON text")
 
-        try:
-            parsed = json.loads(raw_response)
-        except json.JSONDecodeError as exc:
-            raise OllamaSelectorError("ollama response was not valid JSON") from exc
+        parsed = _parse_json_object(raw_response)
         if not isinstance(parsed, dict):
             raise OllamaSelectorError("ollama JSON response was not an object")
         return parsed
@@ -142,11 +140,16 @@ class SelectorInferenceService:
             try:
                 page = await browser.new_page()
                 await page.goto(base_url, wait_until="domcontentloaded", timeout=self.timeout_ms)
-                discovery = await self._suggest_discovery(page, base_url)
-                sample_article_url = await self._validated_sample_url(page, base_url, discovery)
+                index_url = page.url or base_url
+                discovery = await self._suggest_discovery(page, index_url)
+                discovery = await self._validated_discovery(page, index_url, discovery)
 
-                await page.goto(sample_article_url, wait_until="domcontentloaded", timeout=self.timeout_ms)
-                article_selectors = await self._suggest_article_selectors(page, sample_article_url)
+                await page.goto(
+                    discovery.sample_article_url,
+                    wait_until="domcontentloaded",
+                    timeout=self.timeout_ms,
+                )
+                article_selectors = await self._suggest_article_selectors(page, page.url or discovery.sample_article_url)
                 await self._validate_article_selectors(page, article_selectors)
                 return SelectorSuggestion(
                     discovery_selector=discovery.discovery_selector,
@@ -194,20 +197,23 @@ class SelectorInferenceService:
             content_selector=_required_selector(result, "content_selector"),
         )
 
-    async def _validated_sample_url(
+    async def _validated_discovery(
         self,
         page,
         base_url: str,
         discovery: DiscoverySuggestion,
-    ) -> str:
+    ) -> DiscoverySuggestion:
         urls = await _selector_urls(page, base_url, discovery.discovery_selector)
-        if not urls:
-            raise SelectorValidationError("discovery selector did not find same-site article URLs")
-
         suggested = normalize_url(base_url, discovery.sample_article_url)
-        if suggested and _same_host(base_url, suggested) and suggested in urls:
-            return suggested
-        return urls[0]
+        if suggested and _same_host(base_url, suggested):
+            if suggested in urls:
+                return DiscoverySuggestion(discovery.discovery_selector, suggested)
+            repaired_selector = await _repair_discovery_selector(page, base_url, suggested)
+            if repaired_selector:
+                return DiscoverySuggestion(repaired_selector, suggested)
+        if urls:
+            return DiscoverySuggestion(discovery.discovery_selector, urls[0])
+        raise SelectorValidationError("discovery selector did not find same-site article URLs")
 
     async def _validate_article_selectors(self, page, selectors: SelectorSuggestion) -> None:
         checks = {
@@ -263,6 +269,14 @@ async def _selector_urls(page, base_url: str, selector: str) -> list[str]:
     return urls
 
 
+async def _repair_discovery_selector(page, base_url: str, sample_article_url: str) -> str:
+    for selector in _DISCOVERY_REPAIR_SELECTORS:
+        urls = await _selector_urls(page, base_url, selector)
+        if sample_article_url in urls:
+            return selector
+    return ""
+
+
 async def _page_links(page) -> list[dict[str, str]]:
     try:
         links = await page.locator("a").evaluate_all(
@@ -288,6 +302,42 @@ def _required_selector(result: dict, key: str) -> str:
     return selector
 
 
+def _parse_json_object(raw_response: str) -> dict:
+    stripped = raw_response.strip()
+    if not stripped:
+        raise OllamaSelectorError("ollama response was blank")
+    try:
+        parsed = json.loads(stripped)
+    except json.JSONDecodeError:
+        parsed = _extract_json_object(stripped)
+    if not isinstance(parsed, dict):
+        raise OllamaSelectorError("ollama JSON response was not an object")
+    return parsed
+
+
+def _extract_json_object(raw_response: str) -> dict:
+    decoder = json.JSONDecoder()
+    for start in _json_object_starts(raw_response):
+        try:
+            parsed, _ = decoder.raw_decode(raw_response[start:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return parsed
+    raise OllamaSelectorError("ollama response was not valid JSON")
+
+
+def _json_object_starts(raw_response: str) -> list[int]:
+    starts = [index for index, character in enumerate(raw_response) if character == "{"]
+    fenced = raw_response.find("```json")
+    if fenced >= 0:
+        brace = raw_response.find("{", fenced)
+        if brace >= 0 and brace in starts:
+            starts.remove(brace)
+            starts.insert(0, brace)
+    return starts
+
+
 def _compact_html(html: str, max_chars: int) -> str:
     compacted = SCRIPT_STYLE_RE.sub(" ", html)
     compacted = COMMENT_RE.sub(" ", compacted)
@@ -309,3 +359,15 @@ def normalize_url(base_url: str, href: str) -> str | None:
 
 def _same_host(base_url: str, url: str) -> bool:
     return urlparse(base_url).netloc == urlparse(url).netloc
+
+
+_DISCOVERY_REPAIR_SELECTORS = (
+    "article .article-title a",
+    ".article-title a",
+    "article a[href*='/stiri/']",
+    "a[href*='/stiri/']",
+    "h1 a, h2 a, h3 a",
+    "h2 a",
+    "h3 a",
+    "article a[href]",
+)
